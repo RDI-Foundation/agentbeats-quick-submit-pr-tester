@@ -1,0 +1,14 @@
+name: Quick Submit OIDC E2E (PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  decrypt-and-print:
+    if: startsWith(github.head_ref, 'quick-submit-')
+    uses: ./.github/workflows/workflow.yml
+    permissions:
+      id-token: write
+      contents: read
