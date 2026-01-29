@@ -1,0 +1,18 @@
+name: Quick Submit OIDC E2E (PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  decrypt-and-print:
+    if: startsWith(github.head_ref, 'quick-submit-')
+    # Intentionally pin the reusable workflow to main.
+    # When using a local path (./.github/workflows/workflow.yml), GitHub resolves it at the
+    # caller's ref (e.g. refs/pull/.../merge), which makes `job_workflow_ref` vary per PR and
+    # breaks the backend's strict OIDC authorization check.
+    uses: RDI-Foundation/agentbeats-quick-submit-pr-tester/.github/workflows/workflow.yml@refs/heads/main
+    permissions:
+      id-token: write
+      contents: read
