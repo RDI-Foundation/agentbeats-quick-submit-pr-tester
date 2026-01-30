@@ -1,28 +1,30 @@
 name: Quick Submit E2E
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - main
 
 jobs:
   quick-submit-e2e:
-    if: startsWith(github.event.pull_request.head.ref, 'quick-submit-')
+    if: startsWith(github.head_ref, 'quick-submit-')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     env:
-      QUICK_SUBMIT_BACKEND_URL: ${{ vars.QUICK_SUBMIT_BACKEND_URL || 'https://agentbeats.dev' }}
-      QUICK_SUBMIT_OIDC_AUDIENCE: ${{ secrets.QUICK_SUBMIT_OIDC_AUDIENCE || vars.QUICK_SUBMIT_OIDC_AUDIENCE }}
-      GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER || vars.GCP_WIF_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+      QUICK_SUBMIT_BACKEND_URL: ${{ vars.QUICK_SUBMIT_BACKEND_URL }}
+      QUICK_SUBMIT_OIDC_AUDIENCE_SECRET: ${{ secrets.QUICK_SUBMIT_OIDC_AUDIENCE }}
+      QUICK_SUBMIT_OIDC_AUDIENCE_VAR: ${{ vars.QUICK_SUBMIT_OIDC_AUDIENCE }}
+      GCP_WIF_PROVIDER_SECRET: ${{ secrets.GCP_WIF_PROVIDER }}
+      GCP_WIF_PROVIDER_VAR: ${{ vars.GCP_WIF_PROVIDER }}
+      GCP_SERVICE_ACCOUNT_SECRET: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      GCP_SERVICE_ACCOUNT_VAR: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Check for completion marker
         id: marker
@@ -40,6 +42,39 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Resolve workflow configuration
+        id: resolve-config
+        if: steps.marker.outputs.done != 'true'
+        shell: bash
+        env:
+          OIDC_SECRET: ${{ env.QUICK_SUBMIT_OIDC_AUDIENCE_SECRET }}
+          OIDC_VAR: ${{ env.QUICK_SUBMIT_OIDC_AUDIENCE_VAR }}
+          GCP_WIF_SECRET: ${{ env.GCP_WIF_PROVIDER_SECRET }}
+          GCP_WIF_VAR: ${{ env.GCP_WIF_PROVIDER_VAR }}
+          GCP_SA_SECRET: ${{ env.GCP_SERVICE_ACCOUNT_SECRET }}
+          GCP_SA_VAR: ${{ env.GCP_SERVICE_ACCOUNT_VAR }}
+        run: |
+          set -euo pipefail
+
+          oidc="${OIDC_SECRET:-}"
+          if [[ -z "$oidc" ]]; then
+            oidc="${OIDC_VAR:-}"
+          fi
+
+          wif="${GCP_WIF_SECRET:-}"
+          if [[ -z "$wif" ]]; then
+            wif="${GCP_WIF_VAR:-}"
+          fi
+
+          sa="${GCP_SA_SECRET:-}"
+          if [[ -z "$sa" ]]; then
+            sa="${GCP_SA_VAR:-}"
+          fi
+
+          echo "oidc_audience=$oidc" >> "$GITHUB_OUTPUT"
+          echo "gcp_wif_provider=$wif" >> "$GITHUB_OUTPUT"
+          echo "gcp_service_account=$sa" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         if: steps.marker.outputs.done != 'true'
@@ -65,8 +100,8 @@ jobs:
         if: steps.marker.outputs.done != 'true'
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
-          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ steps.resolve-config.outputs.gcp_wif_provider }}
+          service_account: ${{ steps.resolve-config.outputs.gcp_service_account }}
           token_format: access_token
           create_credentials_file: true
           export_environment_variables: true
@@ -76,10 +111,11 @@ jobs:
         env:
           BACKEND_URL: ${{ env.QUICK_SUBMIT_BACKEND_URL }}
           SUBMISSION_ID: ${{ steps.submission.outputs.submission_id }}
-          OIDC_AUDIENCE: ${{ env.QUICK_SUBMIT_OIDC_AUDIENCE }}
+          OIDC_AUDIENCE: ${{ steps.resolve-config.outputs.oidc_audience }}
           GCP_ACCESS_TOKEN: ${{ steps.gcp-auth.outputs.access_token }}
         run: |
           set -euo pipefail
+          BACKEND_URL="${BACKEND_URL:-https://agentbeats.dev}"
           if [[ -z "${OIDC_AUDIENCE:-}" ]]; then
             echo "Missing QUICK_SUBMIT_OIDC_AUDIENCE" >&2
             exit 1
