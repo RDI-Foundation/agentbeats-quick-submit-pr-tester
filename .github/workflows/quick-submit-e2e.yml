@@ -1,0 +1,141 @@
+name: Quick Submit E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  quick-submit-e2e:
+    if: startsWith(github.head_ref, 'quick-submit-')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      QUICK_SUBMIT_BACKEND_URL: ${{ vars.QUICK_SUBMIT_BACKEND_URL || 'https://agentbeats.dev' }}
+      QUICK_SUBMIT_OIDC_AUDIENCE: ${{ secrets.QUICK_SUBMIT_OIDC_AUDIENCE || vars.QUICK_SUBMIT_OIDC_AUDIENCE }}
+      GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER || vars.GCP_WIF_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet cryptography
+
+      - name: Resolve submission id
+        id: submission
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          if [[ "$ref_name" =~ ^quick-submit-([0-9a-fA-F-]{36})$ ]]; then
+            echo "submission_id=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "branch_name=$ref_name" >> "$GITHUB_OUTPUT"
+          else
+            echo "Branch does not match quick-submit pattern: $ref_name" >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Fetch and decrypt quick submit secrets
+        env:
+          BACKEND_URL: ${{ env.QUICK_SUBMIT_BACKEND_URL }}
+          SUBMISSION_ID: ${{ steps.submission.outputs.submission_id }}
+          OIDC_AUDIENCE: ${{ env.QUICK_SUBMIT_OIDC_AUDIENCE }}
+          GCP_ACCESS_TOKEN: ${{ steps.gcp-auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${OIDC_AUDIENCE:-}" ]]; then
+            echo "Missing QUICK_SUBMIT_OIDC_AUDIENCE" >&2
+            exit 1
+          fi
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+            echo "GitHub OIDC env vars are missing; ensure job has id-token: write." >&2
+            exit 1
+          fi
+
+          oidc_response=$(curl -sS \
+            -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE}")
+          oidc_token=$(jq -r '.value' <<<"$oidc_response")
+          if [[ -z "$oidc_token" || "$oidc_token" == "null" ]]; then
+            echo "Failed to fetch GitHub OIDC token: $oidc_response" >&2
+            exit 1
+          fi
+          echo "::add-mask::$oidc_token"
+
+          secrets_response=$(curl -sS \
+            -H "Authorization: Bearer ${oidc_token}" \
+            "${BACKEND_URL}/api/quick-submit/${SUBMISSION_ID}/secrets")
+          secrets_blob=$(jq -r '.secrets_blob' <<<"$secrets_response")
+          wrapped_dek=$(jq -r '.wrapped_dek' <<<"$secrets_response")
+          iv_b64=$(jq -r '.metadata.iv' <<<"$secrets_response")
+          key_id=$(jq -r '.metadata.key_id' <<<"$secrets_response")
+          if [[ -z "$secrets_blob" || "$secrets_blob" == "null" ]]; then
+            echo "Failed to fetch quick submit secrets: $secrets_response" >&2
+            exit 1
+          fi
+          if [[ -z "$key_id" || "$key_id" == "null" ]]; then
+            echo "Failed to fetch quick submit key id: $secrets_response" >&2
+            exit 1
+          fi
+
+          kms_response=$(curl -sS \
+            -H "Authorization: Bearer ${GCP_ACCESS_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"ciphertext\":\"${wrapped_dek}\"}" \
+            "https://cloudkms.googleapis.com/v1/${key_id}:asymmetricDecrypt")
+          dek_b64=$(jq -r '.plaintext' <<<"$kms_response")
+          if [[ -z "$dek_b64" || "$dek_b64" == "null" ]]; then
+            echo "Failed to unwrap DEK via KMS: $kms_response" >&2
+            exit 1
+          fi
+
+          DEK_B64="$dek_b64" IV_B64="$iv_b64" CIPHERTEXT_B64="$secrets_blob" python3 - <<'PY'
+import base64
+import os
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+dek = base64.b64decode(os.environ["DEK_B64"])
+iv = base64.b64decode(os.environ["IV_B64"])
+ciphertext = base64.b64decode(os.environ["CIPHERTEXT_B64"])
+
+plaintext = AESGCM(dek).decrypt(iv, ciphertext, None)
+with open("quick-submit-secrets.json", "wb") as f:
+    f.write(plaintext)
+PY
+
+          complete_response=$(curl -sS -X POST \
+            -H "Authorization: Bearer ${oidc_token}" \
+            "${BACKEND_URL}/api/quick-submit/${SUBMISSION_ID}/complete")
+          deleted=$(jq -r '.deleted' <<<"$complete_response")
+          if [[ "$deleted" != "true" ]]; then
+            echo "Failed to complete quick submit secrets: $complete_response" >&2
+            exit 1
+          fi
+
+      - name: Build secret checker image
+        run: docker build -t secret-checker:local ./secret-checker
+
+      - name: Verify secrets against scenario
+        run: |
+          python scripts/verify_quick_submit.py \
+            --scenario scenario.toml \
+            --secrets-file quick-submit-secrets.json \
+            --image secret-checker:local
