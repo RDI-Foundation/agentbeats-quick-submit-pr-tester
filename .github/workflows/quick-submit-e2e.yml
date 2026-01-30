@@ -1,12 +1,12 @@
 name: Quick Submit E2E
 
 on:
-  push:
-    branches:
-      - 'quick-submit-*'
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 jobs:
   quick-submit-e2e:
+    if: startsWith(github.event.pull_request.head.ref, 'quick-submit-')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,6 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Check for completion marker
         id: marker
