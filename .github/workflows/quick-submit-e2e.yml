@@ -9,7 +9,7 @@ jobs:
     if: startsWith(github.head_ref, 'quick-submit-')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     env:
       QUICK_SUBMIT_BACKEND_URL: ${{ vars.QUICK_SUBMIT_BACKEND_URL || 'https://agentbeats.dev' }}
@@ -21,16 +21,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check for completion marker
+        id: marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f quick-submit-e2e.done ]]; then
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "done=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Python
+        if: steps.marker.outputs.done != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
+        if: steps.marker.outputs.done != 'true'
         run: pip install --quiet cryptography
 
       - name: Resolve submission id
         id: submission
+        if: steps.marker.outputs.done != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -45,6 +59,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: gcp-auth
+        if: steps.marker.outputs.done != 'true'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
@@ -54,6 +69,7 @@ jobs:
           export_environment_variables: true
 
       - name: Fetch and decrypt quick submit secrets
+        if: steps.marker.outputs.done != 'true'
         env:
           BACKEND_URL: ${{ env.QUICK_SUBMIT_BACKEND_URL }}
           SUBMISSION_ID: ${{ steps.submission.outputs.submission_id }}
@@ -131,11 +147,25 @@ PY
           fi
 
       - name: Build secret checker image
+        if: steps.marker.outputs.done != 'true'
         run: docker build -t secret-checker:local ./secret-checker
 
       - name: Verify secrets against scenario
+        if: steps.marker.outputs.done != 'true'
         run: |
           python scripts/verify_quick_submit.py \
             --scenario scenario.toml \
             --secrets-file quick-submit-secrets.json \
             --image secret-checker:local
+
+      - name: Write completion marker
+        if: steps.marker.outputs.done != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "quick submit e2e completed at $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > quick-submit-e2e.done
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add quick-submit-e2e.done
+          git commit -m "Quick submit e2e marker" || exit 0
+          git push origin "HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
