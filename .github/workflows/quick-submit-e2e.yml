@@ -148,18 +148,18 @@ jobs:
           fi
 
           DEK_B64="$dek_b64" IV_B64="$iv_b64" CIPHERTEXT_B64="$secrets_blob" python3 - <<'PY'
-import base64
-import os
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          import base64
+          import os
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-dek = base64.b64decode(os.environ["DEK_B64"])
-iv = base64.b64decode(os.environ["IV_B64"])
-ciphertext = base64.b64decode(os.environ["CIPHERTEXT_B64"])
+          dek = base64.b64decode(os.environ["DEK_B64"])
+          iv = base64.b64decode(os.environ["IV_B64"])
+          ciphertext = base64.b64decode(os.environ["CIPHERTEXT_B64"])
 
-plaintext = AESGCM(dek).decrypt(iv, ciphertext, None)
-with open("quick-submit-secrets.json", "wb") as f:
-    f.write(plaintext)
-PY
+          plaintext = AESGCM(dek).decrypt(iv, ciphertext, None)
+          with open("quick-submit-secrets.json", "wb") as f:
+              f.write(plaintext)
+          PY
 
           complete_response=$(curl -sS -X POST \
             -H "Authorization: Bearer ${oidc_token}" \
