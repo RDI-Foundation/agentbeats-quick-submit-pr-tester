@@ -14,13 +14,10 @@ jobs:
       contents: write
       id-token: write
     env:
-      QUICK_SUBMIT_BACKEND_URL: ${{ vars.QUICK_SUBMIT_BACKEND_URL }}
+      QUICK_SUBMIT_BACKEND_URL_SECRET: ${{ secrets.QUICK_SUBMIT_BACKEND_URL }}
       QUICK_SUBMIT_OIDC_AUDIENCE_SECRET: ${{ secrets.QUICK_SUBMIT_OIDC_AUDIENCE }}
-      QUICK_SUBMIT_OIDC_AUDIENCE_VAR: ${{ vars.QUICK_SUBMIT_OIDC_AUDIENCE }}
       GCP_WIF_PROVIDER_SECRET: ${{ secrets.GCP_WIF_PROVIDER }}
-      GCP_WIF_PROVIDER_VAR: ${{ vars.GCP_WIF_PROVIDER }}
       GCP_SERVICE_ACCOUNT_SECRET: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      GCP_SERVICE_ACCOUNT_VAR: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
     steps:
       - name: Checkout
@@ -49,28 +46,16 @@ jobs:
         shell: bash
         env:
           OIDC_SECRET: ${{ env.QUICK_SUBMIT_OIDC_AUDIENCE_SECRET }}
-          OIDC_VAR: ${{ env.QUICK_SUBMIT_OIDC_AUDIENCE_VAR }}
           GCP_WIF_SECRET: ${{ env.GCP_WIF_PROVIDER_SECRET }}
-          GCP_WIF_VAR: ${{ env.GCP_WIF_PROVIDER_VAR }}
           GCP_SA_SECRET: ${{ env.GCP_SERVICE_ACCOUNT_SECRET }}
-          GCP_SA_VAR: ${{ env.GCP_SERVICE_ACCOUNT_VAR }}
         run: |
           set -euo pipefail
 
           oidc="${OIDC_SECRET:-}"
-          if [[ -z "$oidc" ]]; then
-            oidc="${OIDC_VAR:-}"
-          fi
 
           wif="${GCP_WIF_SECRET:-}"
-          if [[ -z "$wif" ]]; then
-            wif="${GCP_WIF_VAR:-}"
-          fi
 
           sa="${GCP_SA_SECRET:-}"
-          if [[ -z "$sa" ]]; then
-            sa="${GCP_SA_VAR:-}"
-          fi
 
           echo "oidc_audience=$oidc" >> "$GITHUB_OUTPUT"
           echo "gcp_wif_provider=$wif" >> "$GITHUB_OUTPUT"
@@ -109,7 +94,7 @@ jobs:
       - name: Fetch and decrypt quick submit secrets
         if: steps.marker.outputs.done != 'true'
         env:
-          BACKEND_URL: ${{ env.QUICK_SUBMIT_BACKEND_URL }}
+          BACKEND_URL: ${{ env.QUICK_SUBMIT_BACKEND_URL_SECRET }}
           SUBMISSION_ID: ${{ steps.submission.outputs.submission_id }}
           OIDC_AUDIENCE: ${{ steps.resolve-config.outputs.oidc_audience }}
           GCP_ACCESS_TOKEN: ${{ steps.gcp-auth.outputs.access_token }}
