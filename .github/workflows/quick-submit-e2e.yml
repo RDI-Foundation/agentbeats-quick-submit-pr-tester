@@ -1,15 +1,12 @@
 name: Quick Submit E2E
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
   push:
     branches:
       - 'quick-submit-*'
 
 jobs:
   quick-submit-e2e:
-    if: startsWith(github.head_ref || github.ref_name, 'quick-submit-')
     runs-on: ubuntu-latest
     permissions:
       contents: write
