@@ -1,0 +1,15 @@
+[config]
+config = 1
+
+[green_agent]
+agentbeats_id = "019c33de-98ba-7d71-82ec-42d196a4005e"
+
+[green_agent.env]
+test_Green = "${test_Green}"
+
+[[participants]]
+agentbeats_id = "019c33e6-c221-7d10-85e2-c41052712b6a"
+name = "agent"
+
+[participants.env]
+test_purple = "${test_purple}"
