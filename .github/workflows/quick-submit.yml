@@ -1,0 +1,14 @@
+name: Quick Submit
+
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches: [main]
+
+jobs:
+  run-scenario:
+    if: startsWith(github.head_ref, 'quick-submit-')
+    uses: RDI-Foundation/amber-runner/.github/workflows/agentbeats-runner.yml@staverm/quicksubmit-runner
+    permissions:
+      id-token: write
+      contents: write
