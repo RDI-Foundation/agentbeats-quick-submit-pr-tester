@@ -1,0 +1,15 @@
+[config]
+runs = 1
+
+[green_agent]
+agentbeats_id = "019c710f-7b01-7e31-bd1b-2de0b013b3dd"
+
+[green_agent.env]
+GREEN_TOKEN = "${GREEN_TOKEN}"
+
+[[participants]]
+agentbeats_id = "019c710f-7b1c-7583-a568-b586e1c3421d"
+name = "competitor"
+
+[participants.env]
+API_KEY = "${API_KEY}"
