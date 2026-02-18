@@ -6,16 +6,9 @@ on:
     branches: [main]
 
 jobs:
-  run-scenario:
+  run:
     if: startsWith(github.head_ref, 'quick-submit-')
-    uses: RDI-Foundation/agentbeats-leaderboard-template/.github/workflows/run-scenario.yml@main
+    uses: RDI-Foundation/agentbeats-quick-submit-pr-tester/.github/workflows/workflow.yml@main
     permissions:
-      contents: write
-      packages: read
       id-token: write
-    secrets: inherit
-    with:
-      quick_submit_backend_url: ${{ vars.QUICK_SUBMIT_BACKEND_URL || vars.AGENTBEATS_BACKEND_URL || secrets.QUICK_SUBMIT_BACKEND_URL || 'https://agentbeats.dev' }}
-      quick_submit_oidc_audience: ${{ secrets.QUICK_SUBMIT_OIDC_AUDIENCE || vars.QUICK_SUBMIT_OIDC_AUDIENCE }}
-      gcp_wif_provider: ${{ secrets.GCP_WIF_PROVIDER || vars.GCP_WIF_PROVIDER }}
-      gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+      contents: read

@@ -1,0 +1,441 @@
+name: Quick Submit Reusable Scenario
+
+on:
+  workflow_call:
+    inputs:
+      backend_url:
+        description: "Override AgentBeats backend base URL (defaults to vars.QUICK_SUBMIT_BACKEND_URL; otherwise uses built-in prod default)."
+        required: false
+        type: string
+      oidc_audience:
+        description: "Override GitHub OIDC audience for backend auth (defaults to vars.QUICK_SUBMIT_OIDC_AUDIENCE; otherwise uses built-in prod default)."
+        required: false
+        type: string
+      gcp_wif_provider:
+        description: "Override GCP workload identity provider resource (defaults to vars.GCP_WIF_PROVIDER)."
+        required: false
+        type: string
+      gcp_service_account:
+        description: "Override GCP service account email (defaults to vars.GCP_SERVICE_ACCOUNT)."
+        required: false
+        type: string
+      submission_id:
+        description: "Override quick-submit submission UUID (defaults to parsing the PR branch name)."
+        required: false
+        type: string
+      print_secrets:
+        description: "Print the decrypted secrets bundle to logs."
+        required: false
+        default: true
+        type: boolean
+      complete_backend_secrets:
+        description: "Call the backend /complete endpoint to delete secrets after decrypting."
+        required: false
+        default: true
+        type: boolean
+      debug_oidc_claims:
+        description: "Print decoded GitHub OIDC token claims (never prints the token itself)."
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  decrypt:
+    name: Decrypt And Print
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Resolve config
+        id: cfg
+        shell: bash
+        env:
+          INPUT_BACKEND_URL: ${{ inputs.backend_url }}
+          INPUT_OIDC_AUDIENCE: ${{ inputs.oidc_audience }}
+          INPUT_GCP_WIF_PROVIDER: ${{ inputs.gcp_wif_provider }}
+          INPUT_GCP_SERVICE_ACCOUNT: ${{ inputs.gcp_service_account }}
+          INPUT_SUBMISSION_ID: ${{ inputs.submission_id }}
+          BACKEND_URL_VAR: ${{ vars.QUICK_SUBMIT_BACKEND_URL }}
+          OIDC_AUDIENCE_VAR: ${{ vars.QUICK_SUBMIT_OIDC_AUDIENCE }}
+          GCP_WIF_PROVIDER_VAR: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_SERVICE_ACCOUNT_VAR: ${{ vars.GCP_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          # Built-in defaults for prod so callers don't need to configure GitHub vars.
+          # For local dev / e2e, override via vars (recommended) or workflow_call inputs.
+          DEFAULT_BACKEND_URL="https://agentbeats.dev"
+          DEFAULT_OIDC_AUDIENCE="agentbeats-quick-submit-prod"
+
+          backend_url="${INPUT_BACKEND_URL:-}"
+          if [[ -z "$backend_url" ]]; then
+            backend_url="${BACKEND_URL_VAR:-}"
+          fi
+          if [[ -z "$backend_url" ]]; then
+            backend_url="$DEFAULT_BACKEND_URL"
+          fi
+
+          oidc_audience="${INPUT_OIDC_AUDIENCE:-}"
+          if [[ -z "$oidc_audience" ]]; then
+            oidc_audience="${OIDC_AUDIENCE_VAR:-}"
+          fi
+          if [[ -z "$oidc_audience" ]]; then
+            oidc_audience="$DEFAULT_OIDC_AUDIENCE"
+          fi
+
+          gcp_wif_provider="${INPUT_GCP_WIF_PROVIDER:-}"
+          if [[ -z "$gcp_wif_provider" ]]; then
+            gcp_wif_provider="${GCP_WIF_PROVIDER_VAR:-}"
+          fi
+
+          gcp_service_account="${INPUT_GCP_SERVICE_ACCOUNT:-}"
+          if [[ -z "$gcp_service_account" ]]; then
+            gcp_service_account="${GCP_SERVICE_ACCOUNT_VAR:-}"
+          fi
+
+          if [[ -z "$backend_url" ]]; then
+            echo "Missing backend URL. Set vars.QUICK_SUBMIT_BACKEND_URL or pass workflow_call input backend_url." >&2
+            exit 1
+          fi
+          if [[ -z "$oidc_audience" ]]; then
+            echo "Missing OIDC audience. Set vars.QUICK_SUBMIT_OIDC_AUDIENCE or pass workflow_call input oidc_audience." >&2
+            exit 1
+          fi
+          if [[ -z "$gcp_wif_provider" ]]; then
+            echo "Missing GCP WIF provider. Set vars.GCP_WIF_PROVIDER or pass workflow_call input gcp_wif_provider." >&2
+            exit 1
+          fi
+          if [[ -z "$gcp_service_account" ]]; then
+            echo "Missing GCP service account. Set vars.GCP_SERVICE_ACCOUNT or pass workflow_call input gcp_service_account." >&2
+            exit 1
+          fi
+
+          echo "backend_url=$backend_url" >> "$GITHUB_OUTPUT"
+          echo "oidc_audience=$oidc_audience" >> "$GITHUB_OUTPUT"
+          echo "gcp_wif_provider=$gcp_wif_provider" >> "$GITHUB_OUTPUT"
+          echo "gcp_service_account=$gcp_service_account" >> "$GITHUB_OUTPUT"
+
+          submission_id="${INPUT_SUBMISSION_ID:-}"
+          if [[ -n "$submission_id" ]]; then
+            echo "submission_id=$submission_id" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve submission id (from PR branch)
+        id: submission
+        if: steps.cfg.outputs.submission_id == ''
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ref_name="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          if [[ -z "$ref_name" ]]; then
+            echo "GITHUB_HEAD_REF/GITHUB_REF_NAME missing; cannot derive submission id." >&2
+            exit 1
+          fi
+
+          if [[ "$ref_name" =~ ^quick-submit-([0-9a-fA-F-]{36})$ ]]; then
+            echo "submission_id=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Fallback: attempt to parse PR body (when available) for "- Submission ID: <uuid>".
+          if [[ -n "${GITHUB_EVENT_PATH:-}" && -f "$GITHUB_EVENT_PATH" ]]; then
+            body="$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+            if [[ "$body" =~ Submission[[:space:]]ID:[[:space:]]([0-9a-fA-F-]{36}) ]]; then
+              echo "submission_id=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          echo "Unable to derive submission id from branch ($ref_name) or PR body." >&2
+          exit 1
+
+      - name: Fetch GitHub OIDC token (for backend)
+        id: oidc
+        shell: bash
+        env:
+          OIDC_AUDIENCE: ${{ steps.cfg.outputs.oidc_audience }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+            echo "GitHub OIDC env vars are missing; ensure job has permissions: id-token: write." >&2
+            exit 1
+          fi
+
+          oidc_response="$(curl -fsS \
+            -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE}")"
+
+          oidc_token="$(jq -r '.value' <<<"$oidc_response")"
+          if [[ -z "$oidc_token" || "$oidc_token" == "null" ]]; then
+            echo "Failed to fetch GitHub OIDC token: $oidc_response" >&2
+            exit 1
+          fi
+
+          echo "::add-mask::$oidc_token"
+          echo "token=$oidc_token" >> "$GITHUB_OUTPUT"
+
+      - name: Debug OIDC claims
+        if: inputs.debug_oidc_claims
+        env:
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          function b64urlDecodeToJson(part) {
+            // GitHub OIDC tokens are JWTs (base64url).
+            const pad = '='.repeat((4 - (part.length % 4)) % 4);
+            const b64 = (part + pad).replace(/-/g, '+').replace(/_/g, '/');
+            const json = Buffer.from(b64, 'base64').toString('utf8');
+            return JSON.parse(json);
+          }
+
+          const token = process.env.OIDC_TOKEN || '';
+          const parts = token.split('.');
+          if (parts.length < 2) {
+            console.error('OIDC token is not a JWT (unexpected).');
+            process.exit(1);
+          }
+          const claims = b64urlDecodeToJson(parts[1]);
+          const picked = {
+            iss: claims.iss,
+            aud: claims.aud,
+            repository: claims.repository,
+            ref: claims.ref,
+            job_workflow_ref: claims.job_workflow_ref,
+            workflow_ref: claims.workflow_ref,
+            sub: claims.sub,
+            run_id: claims.run_id,
+            sha: claims.sha,
+          };
+          console.log('GitHub OIDC claims (selected):');
+          console.log(JSON.stringify(picked, null, 2));
+          NODE
+
+      - name: Fetch secrets bundle from backend
+        id: bundle
+        shell: bash
+        env:
+          BACKEND_URL: ${{ steps.cfg.outputs.backend_url }}
+          SUBMISSION_ID: ${{ steps.cfg.outputs.submission_id || steps.submission.outputs.submission_id }}
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          set -euo pipefail
+          echo "Fetching secrets bundle for submission_id=${SUBMISSION_ID}"
+
+          secrets_url="${BACKEND_URL}/api/quick-submit/${SUBMISSION_ID}/secrets"
+          http_code="$(curl -sS -o secrets_response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OIDC_TOKEN}" \
+            "$secrets_url" || true)"
+          secrets_response="$(cat secrets_response.json)"
+
+          if [[ "$http_code" != "200" ]]; then
+            echo "Backend returned HTTP ${http_code} for ${secrets_url}:" >&2
+            echo "$secrets_response" >&2
+            exit 1
+          fi
+
+          secrets_blob="$(jq -r '.secrets_blob' <<<"$secrets_response")"
+          wrapped_dek="$(jq -r '.wrapped_dek' <<<"$secrets_response")"
+          iv_b64="$(jq -r '.metadata.iv' <<<"$secrets_response")"
+          key_id="$(jq -r '.metadata.key_id' <<<"$secrets_response")"
+
+          if [[ -z "$secrets_blob" || "$secrets_blob" == "null" ]]; then
+            echo "Backend did not return secrets_blob: $secrets_response" >&2
+            exit 1
+          fi
+          if [[ -z "$wrapped_dek" || "$wrapped_dek" == "null" ]]; then
+            echo "Backend did not return wrapped_dek: $secrets_response" >&2
+            exit 1
+          fi
+          if [[ -z "$iv_b64" || "$iv_b64" == "null" ]]; then
+            echo "Backend did not return metadata.iv: $secrets_response" >&2
+            exit 1
+          fi
+          if [[ -z "$key_id" || "$key_id" == "null" ]]; then
+            echo "Backend did not return metadata.key_id: $secrets_response" >&2
+            exit 1
+          fi
+
+          echo "secrets_blob_b64=$secrets_blob" >> "$GITHUB_OUTPUT"
+          echo "wrapped_dek_b64=$wrapped_dek" >> "$GITHUB_OUTPUT"
+          echo "iv_b64=$iv_b64" >> "$GITHUB_OUTPUT"
+          echo "key_id=$key_id" >> "$GITHUB_OUTPUT"
+
+          echo "KMS key version (from backend): $key_id"
+
+      - name: Authenticate to Google Cloud (WIF)
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ steps.cfg.outputs.gcp_wif_provider }}
+          service_account: ${{ steps.cfg.outputs.gcp_service_account }}
+          token_format: access_token
+
+      - name: Unwrap DEK via GCP KMS
+        id: dek
+        shell: bash
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.gcp-auth.outputs.access_token }}
+          KMS_KEY_ID: ${{ steps.bundle.outputs.key_id }}
+          WRAPPED_DEK_B64: ${{ steps.bundle.outputs.wrapped_dek_b64 }}
+        run: |
+          set -euo pipefail
+
+          kms_url="https://cloudkms.googleapis.com/v1/${KMS_KEY_ID}:asymmetricDecrypt"
+          http_code="$(curl -sS -o kms_response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${GCP_ACCESS_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"ciphertext\":\"${WRAPPED_DEK_B64}\"}" \
+            "$kms_url" || true)"
+          kms_response="$(cat kms_response.json)"
+
+          if [[ "$http_code" != "200" ]]; then
+            echo "KMS returned HTTP ${http_code} for ${kms_url}:" >&2
+            echo "$kms_response" >&2
+            exit 1
+          fi
+
+          dek_b64="$(jq -r '.plaintext' <<<"$kms_response")"
+          if [[ -z "$dek_b64" || "$dek_b64" == "null" ]]; then
+            echo "Failed to unwrap DEK via KMS: $kms_response" >&2
+            exit 1
+          fi
+
+          echo "dek_b64=$dek_b64" >> "$GITHUB_OUTPUT"
+
+      - name: Decrypt secrets bundle
+        id: decrypt
+        shell: bash
+        env:
+          PRINT_SECRETS: ${{ inputs.print_secrets }}
+          DEK_B64: ${{ steps.dek.outputs.dek_b64 }}
+          IV_B64: ${{ steps.bundle.outputs.iv_b64 }}
+          CIPHERTEXT_B64: ${{ steps.bundle.outputs.secrets_blob_b64 }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const crypto = require('crypto');
+
+          const dekB64 = process.env.DEK_B64 || '';
+          const ivB64 = process.env.IV_B64 || '';
+          const ctB64 = process.env.CIPHERTEXT_B64 || '';
+          const printSecrets = String(process.env.PRINT_SECRETS || 'true') === 'true';
+
+          const dek = Buffer.from(dekB64, 'base64');
+          const iv = Buffer.from(ivB64, 'base64');
+          const ciphertextAndTag = Buffer.from(ctB64, 'base64');
+
+          if (dek.length !== 32) {
+            console.error(`Unexpected DEK length: ${dek.length} (expected 32)`);
+            process.exit(1);
+          }
+          if (iv.length !== 12) {
+            console.error(`Unexpected IV length: ${iv.length} (expected 12)`);
+            process.exit(1);
+          }
+          if (ciphertextAndTag.length < 16) {
+            console.error('Ciphertext too short to contain an AES-GCM auth tag.');
+            process.exit(1);
+          }
+
+          const tag = ciphertextAndTag.subarray(ciphertextAndTag.length - 16);
+          const ciphertext = ciphertextAndTag.subarray(0, ciphertextAndTag.length - 16);
+
+          const decipher = crypto.createDecipheriv('aes-256-gcm', dek, iv);
+          decipher.setAuthTag(tag);
+
+          let plaintext;
+          try {
+            plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+          } catch (e) {
+            console.error('AES-GCM decrypt failed (auth tag mismatch?):', e?.message || e);
+            process.exit(1);
+          }
+
+          const jsonText = plaintext.toString('utf8');
+          let obj;
+          try {
+            obj = JSON.parse(jsonText);
+          } catch (e) {
+            console.error('Decrypted plaintext was not valid JSON.');
+            console.error('Plaintext (utf8):');
+            console.log(jsonText);
+            process.exit(1);
+          }
+
+          if (printSecrets) {
+            console.log('Decrypted quick submit secrets bundle:');
+            console.log(JSON.stringify(obj, null, 2));
+          } else {
+            console.log('Decrypted quick submit secrets bundle (printing disabled).');
+            console.log(`green secrets: ${Object.keys(obj.green || {}).length}`);
+            console.log(`participants: ${(obj.participants || []).length}`);
+          }
+          NODE
+
+      - name: Generate mock submission artifact
+        shell: bash
+        env:
+          SUBMISSION_ID: ${{ steps.cfg.outputs.submission_id || steps.submission.outputs.submission_id }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p agentbeats-submission
+          timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          cat > agentbeats-submission/manifest.json <<JSON
+          {"target_leaderboard":"${REPOSITORY}","purple_agent_owner":"test-owner","purple_agent_repo":"test-owner/mock-agent","run_id":"${RUN_ID}","run_url":"${RUN_URL}","timestamp":"${timestamp}"}
+          JSON
+
+          cat > agentbeats-submission/results.json <<JSON
+          {"participants":{"agent_a":"11111111-1111-1111-1111-111111111111","agent_b":"22222222-2222-2222-2222-222222222222"},"results":[{"winner":"agent_a","detail":{"agent_a":{"score":1},"agent_b":{"score":0}}}]}
+          JSON
+
+          cat > agentbeats-submission/scenario.toml <<TOML
+          [scenario]
+          name = "quick-submit-mock-${SUBMISSION_ID}"
+          TOML
+
+          (cd agentbeats-submission && zip -q -r ../agentbeats-submission.zip manifest.json results.json scenario.toml)
+
+      - name: Upload submission artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentbeats-submission
+          path: agentbeats-submission.zip
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Complete backend secrets (delete)
+        if: inputs.complete_backend_secrets
+        shell: bash
+        env:
+          BACKEND_URL: ${{ steps.cfg.outputs.backend_url }}
+          SUBMISSION_ID: ${{ steps.cfg.outputs.submission_id || steps.submission.outputs.submission_id }}
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          complete_url="${BACKEND_URL}/api/quick-submit/${SUBMISSION_ID}/complete"
+          http_code="$(curl -sS -o complete_response.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${OIDC_TOKEN}" \
+            "$complete_url" || true)"
+          complete_response="$(cat complete_response.json)"
+
+          if [[ "$http_code" != "200" ]]; then
+            echo "Backend returned HTTP ${http_code} for ${complete_url}:" >&2
+            echo "$complete_response" >&2
+            exit 1
+          fi
+
+          deleted="$(jq -r '.deleted' <<<"$complete_response")"
+          if [[ "$deleted" != "true" ]]; then
+            echo "Backend /complete did not return deleted=true: $complete_response" >&2
+            exit 1
+          fi
+
+          echo "Backend secrets deleted (complete=true)."
