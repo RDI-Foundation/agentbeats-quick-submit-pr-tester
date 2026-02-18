@@ -2,15 +2,14 @@
 runs = 1
 
 [green_agent]
-agentbeats_id = "019c7193-f99d-7363-bfe6-b2b916a1f5a5"
+agentbeats_id = "019c7301-4389-79e0-a344-1f4e233c9525"
 
 [green_agent.env]
 GREEN_TOKEN = "${GREEN_TOKEN}"
 
 [[participants]]
-agentbeats_id = "019c7193-f9bd-7b71-af97-fde06bfb3d76"
+agentbeats_id = "019c7301-43a8-7a03-a003-fc60ce910052"
 name = "competitor"
 
 [participants.env]
 API_KEY = "${API_KEY}"
-# ci-sync-trigger 2026-02-18T16:33:15Z
