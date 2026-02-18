@@ -415,13 +415,11 @@ jobs:
           name = "quick-submit-mock-${SUBMISSION_ID}"
           TOML
 
-          (cd agentbeats-submission && zip -q -r ../agentbeats-submission.zip manifest.json results.json scenario.toml)
-
       - name: Upload submission artifact
         uses: actions/upload-artifact@v4
         with:
           name: agentbeats-submission
-          path: agentbeats-submission.zip
+          path: agentbeats-submission/
           if-no-files-found: error
           retention-days: 1
 
