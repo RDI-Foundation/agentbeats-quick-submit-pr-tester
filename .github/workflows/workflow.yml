@@ -72,6 +72,12 @@ jobs:
           if [[ -z "$backend_url" ]]; then
             backend_url="${BACKEND_URL_VAR:-}"
           fi
+          if [[ -z "$backend_url" && -n "${GITHUB_EVENT_PATH:-}" && -f "$GITHUB_EVENT_PATH" ]]; then
+            pr_body="$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+            if [[ "$pr_body" =~ Backend[[:space:]]URL:[[:space:]](https://[^[:space:]]+) ]]; then
+              backend_url="${BASH_REMATCH[1]}"
+            fi
+          fi
           if [[ -z "$backend_url" ]]; then
             backend_url="$DEFAULT_BACKEND_URL"
           fi
