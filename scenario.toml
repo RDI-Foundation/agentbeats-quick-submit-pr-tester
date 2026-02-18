@@ -13,3 +13,4 @@ name = "competitor"
 
 [participants.env]
 API_KEY = "${API_KEY}"
+# ci-sync-trigger 2026-02-18T16:33:15Z
