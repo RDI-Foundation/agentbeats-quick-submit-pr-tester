@@ -2,13 +2,13 @@
 runs = 1
 
 [green_agent]
-agentbeats_id = "019ca086-593a-7c93-9a21-907a84927acf"
+agentbeats_id = "019ca088-4755-70e0-bed3-261b59191587"
 
 [green_agent.env]
 GREEN_TOKEN = "${GREEN_TOKEN}"
 
 [[participants]]
-agentbeats_id = "019ca086-595a-7cc2-8677-81b3ab79235c"
+agentbeats_id = "019ca088-4775-7950-8b74-9be8b57152a6"
 name = "competitor"
 
 [participants.env]
