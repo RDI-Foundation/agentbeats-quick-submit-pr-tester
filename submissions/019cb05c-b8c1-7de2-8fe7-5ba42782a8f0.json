@@ -1,0 +1,75 @@
+{
+  "manifest_version": "0.1.0",
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "competitor_openai_api_key": {
+        "type": "string",
+        "secret": true
+      },
+      "green_google_api_key": {
+        "type": "string",
+        "secret": true
+      }
+    },
+    "required": [
+      "green_google_api_key",
+      "competitor_openai_api_key"
+    ],
+    "additionalProperties": false
+  },
+  "components": {
+    "gateway": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/heads/main/amber-manifest.json5",
+      "config": {
+        "assessment_config": {
+          "runs": 1
+        },
+        "participant_roles": {
+          "green": "green",
+          "purple1": "competitor"
+        },
+        "callback_urls": {
+          "green": "${bindings.green-proxy.url}"
+        }
+      }
+    },
+    "green": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/heads/main/examples/debate/debate-judge.json5",
+      "config": {
+        "google_api_key": "${config.green_google_api_key}"
+      }
+    },
+    "competitor": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/heads/main/examples/debate/debater.json5",
+      "config": {
+        "openai_api_key": "${config.competitor_openai_api_key}"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": "#gateway.green",
+      "from": "#green.a2a"
+    },
+    {
+      "to": "#gateway.purple1",
+      "from": "#competitor.a2a"
+    },
+    {
+      "to": "#green.proxy",
+      "from": "#gateway.proxy",
+      "weak": true,
+      "name": "green-proxy"
+    }
+  ],
+  "exports": {
+    "results": "#gateway.results"
+  },
+  "metadata": {
+    "agentbeats_ids": {
+      "green": "019cb05c-b6f1-7952-ba32-4f3a0363033a",
+      "competitor": "019cb05c-b713-77f1-b398-55a03f12dc7d"
+    }
+  }
+}
