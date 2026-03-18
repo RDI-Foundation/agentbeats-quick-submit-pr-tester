@@ -1,0 +1,30 @@
+{
+  manifest_version: "0.1.0",
+  program: {
+    image: "python:3.12-slim",
+    entrypoint: "sh -lc \"pip install --quiet --no-cache-dir 'a2a-sdk[http-server]==0.3.20' >/tmp/pip.log && python -c 'import base64, os, pathlib; pathlib.Path(\\\"/tmp/server.py\\\").write_bytes(base64.b64decode(os.environ[\\\"AGENT_SERVER_B64\\\"]))' && python /tmp/server.py --host 0.0.0.0 --port 9010\"",
+    env: {
+      AGENT_SERVER_B64: "aW1wb3J0IGFyZ3BhcnNlCmltcG9ydCBvcwoKaW1wb3J0IHV2aWNvcm4KZnJvbSBhMmEuc2VydmVyLmFnZW50X2V4ZWN1dGlvbiBpbXBvcnQgQWdlbnRFeGVjdXRvciwgUmVxdWVzdENvbnRleHQKZnJvbSBhMmEuc2VydmVyLmFwcHMgaW1wb3J0IEEyQVN0YXJsZXR0ZUFwcGxpY2F0aW9uCmZyb20gYTJhLnNlcnZlci5ldmVudHMgaW1wb3J0IEV2ZW50UXVldWUKZnJvbSBhMmEuc2VydmVyLnJlcXVlc3RfaGFuZGxlcnMgaW1wb3J0IERlZmF1bHRSZXF1ZXN0SGFuZGxlcgpmcm9tIGEyYS5zZXJ2ZXIudGFza3MgaW1wb3J0IEluTWVtb3J5VGFza1N0b3JlLCBUYXNrVXBkYXRlcgpmcm9tIGEyYS50eXBlcyBpbXBvcnQgQWdlbnRDYXBhYmlsaXRpZXMsIEFnZW50Q2FyZCwgSW52YWxpZFJlcXVlc3RFcnJvciwgTWVzc2FnZSwgVGFza1N0YXRlCmZyb20gYTJhLnV0aWxzIGltcG9ydCBnZXRfbWVzc2FnZV90ZXh0LCBuZXdfYWdlbnRfdGV4dF9tZXNzYWdlLCBuZXdfdGFzawpmcm9tIGEyYS51dGlscy5lcnJvcnMgaW1wb3J0IFNlcnZlckVycm9yCgoKY2xhc3MgRXhlY3V0b3IoQWdlbnRFeGVjdXRvcik6CiAgICBhc3luYyBkZWYgZXhlY3V0ZShzZWxmLCBjb250ZXh0OiBSZXF1ZXN0Q29udGV4dCwgZXZlbnRfcXVldWU6IEV2ZW50UXVldWUpIC0+IE5vbmU6CiAgICAgICAgbWVzc2FnZSA9IGNvbnRleHQubWVzc2FnZQogICAgICAgIGlmIG1lc3NhZ2UgaXMgTm9uZToKICAgICAgICAgICAgcmFpc2UgU2VydmVyRXJyb3IoZXJyb3I9SW52YWxpZFJlcXVlc3RFcnJvcihtZXNzYWdlPSJNaXNzaW5nIG1lc3NhZ2UiKSkKCiAgICAgICAgdGFzayA9IGNvbnRleHQuY3VycmVudF90YXNrIG9yIG5ld190YXNrKG1lc3NhZ2UpCiAgICAgICAgaWYgY29udGV4dC5jdXJyZW50X3Rhc2sgaXMgTm9uZToKICAgICAgICAgICAgYXdhaXQgZXZlbnRfcXVldWUuZW5xdWV1ZV9ldmVudCh0YXNrKQoKICAgICAgICB1cGRhdGVyID0gVGFza1VwZGF0ZXIoZXZlbnRfcXVldWUsIHRhc2suaWQsIHRhc2suY29udGV4dF9pZCkKICAgICAgICBhd2FpdCB1cGRhdGVyLnN0YXJ0X3dvcmsoKQoKICAgICAgICBwcm9tcHQgPSBnZXRfbWVzc2FnZV90ZXh0KG1lc3NhZ2UpCiAgICAgICAgcmVwbHkgPSBmIm1vY2stcHVycGxlOntvcy5lbnZpcm9uWydBUElfS0VZJ119Ontwcm9tcHR9IgogICAgICAgIGF3YWl0IHVwZGF0ZXIuY29tcGxldGUoCiAgICAgICAgICAgIG5ld19hZ2VudF90ZXh0X21lc3NhZ2UocmVwbHksIGNvbnRleHRfaWQ9dGFzay5jb250ZXh0X2lkLCB0YXNrX2lkPXRhc2suaWQpCiAgICAgICAgKQoKICAgIGFzeW5jIGRlZiBjYW5jZWwoc2VsZiwgY29udGV4dDogUmVxdWVzdENvbnRleHQsIGV2ZW50X3F1ZXVlOiBFdmVudFF1ZXVlKToKICAgICAgICByYWlzZSBTZXJ2ZXJFcnJvcihlcnJvcj1JbnZhbGlkUmVxdWVzdEVycm9yKG1lc3NhZ2U9IkNhbmNlbCBpcyB1bnN1cHBvcnRlZCIpKQoKCmRlZiBtYWluKCkgLT4gTm9uZToKICAgIHBhcnNlciA9IGFyZ3BhcnNlLkFyZ3VtZW50UGFyc2VyKGRlc2NyaXB0aW9uPSJSdW4gdGhlIG1vY2sgcHVycGxlIGFnZW50LiIpCiAgICBwYXJzZXIuYWRkX2FyZ3VtZW50KCItLWhvc3QiLCBkZWZhdWx0PSIxMjcuMC4wLjEiKQogICAgcGFyc2VyLmFkZF9hcmd1bWVudCgiLS1wb3J0IiwgdHlwZT1pbnQsIGRlZmF1bHQ9OTAxMCkKICAgIHBhcnNlci5hZGRfYXJndW1lbnQoIi0tY2FyZC11cmwiLCBkZWZhdWx0PU5vbmUpCiAgICBhcmdzID0gcGFyc2VyLnBhcnNlX2FyZ3MoKQoKICAgIGFnZW50X2NhcmQgPSBBZ2VudENhcmQoCiAgICAgICAgbmFtZT0ibW9jay1wdXJwbGUiLAogICAgICAgIGRlc2NyaXB0aW9uPSJEZXRlcm1pbmlzdGljIHBhcnRpY2lwYW50IGZvciBBZ2VudEJlYXRzIHF1aWNrLXN1Ym1pdCBlMmUuIiwKICAgICAgICB1cmw9YXJncy5jYXJkX3VybCBvciBmImh0dHA6Ly97YXJncy5ob3N0fTp7YXJncy5wb3J0fS8iLAogICAgICAgIHZlcnNpb249IjEuMC4wIiwKICAgICAgICBkZWZhdWx0X2lucHV0X21vZGVzPVsidGV4dCJdLAogICAgICAgIGRlZmF1bHRfb3V0cHV0X21vZGVzPVsidGV4dCJdLAogICAgICAgIGNhcGFiaWxpdGllcz1BZ2VudENhcGFiaWxpdGllcyhzdHJlYW1pbmc9VHJ1ZSksCiAgICAgICAgc2tpbGxzPVtdLAogICAgKQoKICAgIHJlcXVlc3RfaGFuZGxlciA9IERlZmF1bHRSZXF1ZXN0SGFuZGxlcigKICAgICAgICBhZ2VudF9leGVjdXRvcj1FeGVjdXRvcigpLAogICAgICAgIHRhc2tfc3RvcmU9SW5NZW1vcnlUYXNrU3RvcmUoKSwKICAgICkKICAgIHNlcnZlciA9IEEyQVN0YXJsZXR0ZUFwcGxpY2F0aW9uKAogICAgICAgIGFnZW50X2NhcmQ9YWdlbnRfY2FyZCwKICAgICAgICBodHRwX2hhbmRsZXI9cmVxdWVzdF9oYW5kbGVyLAogICAgKQogICAgdXZpY29ybi5ydW4oc2VydmVyLmJ1aWxkKCksIGhvc3Q9YXJncy5ob3N0LCBwb3J0PWFyZ3MucG9ydCkKCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgbWFpbigpCg==",
+      API_KEY: "${config.api_key}",
+    },
+    network: {
+      endpoints: [
+        { name: "endpoint", port: 9010 },
+      ],
+    },
+  },
+  config_schema: {
+    type: "object",
+    properties: {
+      api_key: { type: "string", secret: true },
+    },
+    required: ["api_key"],
+    additionalProperties: false,
+  },
+  provides: {
+    a2a: { kind: "a2a", endpoint: "endpoint" },
+  },
+  exports: {
+    a2a: "a2a",
+  },
+}
