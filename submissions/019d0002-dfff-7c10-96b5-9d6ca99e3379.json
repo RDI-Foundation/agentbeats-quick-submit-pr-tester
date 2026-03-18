@@ -1,0 +1,66 @@
+{
+  "manifest_version": "0.1.0",
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "competitor_api_key": {
+        "type": "string",
+        "secret": true
+      },
+      "green_green_token": {
+        "type": "string",
+        "secret": true
+      }
+    },
+    "required": [
+      "green_green_token",
+      "competitor_api_key"
+    ],
+    "additionalProperties": false
+  },
+  "components": {
+    "gateway": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/tags/v0.1/amber-manifest.json5",
+      "config": {
+        "assessment_config": {
+          "runs": 1
+        },
+        "participant_roles": {
+          "green": "green",
+          "purple1": "competitor"
+        }
+      }
+    },
+    "green": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/main/manifests/mock-green.json5?token=B5PZKCGN66LEA6WQWPN77PTJXJPSXAVPNFXHG5DBNRWGC5DJN5XF62LEZYDHNIDIWFUW443UMFWGYYLUNFXW4X3UPFYGLN2JNZ2GKZ3SMF2GS33OJFXHG5DBNRWGC5DJN5XA",
+      "config": {
+        "green_token": "${config.green_green_token}"
+      }
+    },
+    "competitor": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/main/manifests/mock-purple.json5?token=B5PZKCFBRQ3RRR2A2G5FB7TJXJPSZAVPNFXHG5DBNRWGC5DJN5XF62LEZYDHNIDIWFUW443UMFWGYYLUNFXW4X3UPFYGLN2JNZ2GKZ3SMF2GS33OJFXHG5DBNRWGC5DJN5XA",
+      "config": {
+        "api_key": "${config.competitor_api_key}"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": "#gateway.green",
+      "from": "#green.a2a"
+    },
+    {
+      "to": "#gateway.purple1",
+      "from": "#competitor.a2a"
+    }
+  ],
+  "exports": {
+    "results": "#gateway.results"
+  },
+  "metadata": {
+    "agentbeats_ids": {
+      "green": "019d0002-dba0-7d72-abcd-b0710b1ea835",
+      "competitor": "019d0002-dbe5-78a0-95ca-0a65589dd1ad"
+    }
+  }
+}
