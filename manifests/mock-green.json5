@@ -1,0 +1,36 @@
+{
+  manifest_version: "0.1.0",
+  program: {
+    image: "ghcr.io/rdi-foundation/agentbeats-quick-submit-pr-tester-mock-green:latest",
+    entrypoint: "python /app/server.py --host 0.0.0.0 --port 9009",
+    env: {
+      GREEN_TOKEN: "${config.green_token}",
+    },
+    network: {
+      endpoints: [
+        { name: "endpoint", port: 9009 },
+      ],
+    },
+  },
+  config_schema: {
+    type: "object",
+    properties: {
+      green_token: { type: "string", secret: true },
+    },
+    required: ["green_token"],
+    additionalProperties: false,
+  },
+  slots: {
+    proxy: { kind: "a2a" },
+  },
+  provides: {
+    a2a: { kind: "a2a", endpoint: "endpoint" },
+  },
+  exports: {
+    a2a: "a2a",
+  },
+  metadata: {
+    assessment_config: { runs: 1 },
+    participant_roles: ["competitor"],
+  },
+}
