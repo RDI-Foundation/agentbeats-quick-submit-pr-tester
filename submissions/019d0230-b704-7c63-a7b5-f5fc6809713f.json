@@ -1,0 +1,75 @@
+{
+  "manifest_version": "0.1.0",
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "competitor_api_key": {
+        "type": "string",
+        "secret": true
+      },
+      "green_green_token": {
+        "type": "string",
+        "secret": true
+      }
+    },
+    "required": [
+      "green_green_token",
+      "competitor_api_key"
+    ],
+    "additionalProperties": false
+  },
+  "components": {
+    "gateway": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/tags/v0.3/amber-manifest.json5",
+      "config": {
+        "assessment_config": {
+          "runs": 1
+        },
+        "participant_roles": {
+          "green": "green",
+          "purple1": "competitor"
+        },
+        "callback_urls": {
+          "green": "${bindings.green-proxy.url}"
+        }
+      }
+    },
+    "green": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/agentbeats-e2e-quick-submit-d29c462911/manifests/mock-green.json5?token=B5PZKCF536OWJK3SYJ7TVULJXLW7RAVPNFXHG5DBNRWGC5DJN5XF62LEZYDHNIDIWFUW443UMFWGYYLUNFXW4X3UPFYGLN2JNZ2GKZ3SMF2GS33OJFXHG5DBNRWGC5DJN5XA",
+      "config": {
+        "green_token": "${config.green_green_token}"
+      }
+    },
+    "competitor": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/agentbeats-e2e-quick-submit-d29c462911/manifests/mock-purple.json5?token=B5PZKCBFO3SYGLAYBF6FQ5TJXLW7TAVPNFXHG5DBNRWGC5DJN5XF62LEZYDHNIDIWFUW443UMFWGYYLUNFXW4X3UPFYGLN2JNZ2GKZ3SMF2GS33OJFXHG5DBNRWGC5DJN5XA",
+      "config": {
+        "api_key": "${config.competitor_api_key}"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": "#gateway.green",
+      "from": "#green.a2a"
+    },
+    {
+      "to": "#gateway.purple1",
+      "from": "#competitor.a2a"
+    },
+    {
+      "to": "#green.proxy",
+      "from": "#gateway.proxy",
+      "weak": true,
+      "name": "green-proxy"
+    }
+  ],
+  "exports": {
+    "results": "#gateway.results"
+  },
+  "metadata": {
+    "agentbeats_ids": {
+      "green": "019d0230-ad37-7941-9cd9-f19550a95053",
+      "competitor": "019d0230-ad81-79c1-a807-0faae0247061"
+    }
+  }
+}
