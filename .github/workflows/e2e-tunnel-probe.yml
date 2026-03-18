@@ -1,0 +1,58 @@
+name: E2E Tunnel Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: Backend tunnel base URL
+        required: true
+        type: string
+      webhook_url:
+        description: Webhook tunnel base URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for backend tunnel
+        shell: bash
+        env:
+          BACKEND_URL: ${{ inputs.backend_url }}
+        run: |
+          set -euo pipefail
+          endpoint="${BACKEND_URL%/}/api/quick-submit/public-key"
+          for _ in $(seq 1 60); do
+            http_code="$(curl -sS -o /tmp/backend-probe-response -w "%{http_code}" "$endpoint" || true)"
+            if [[ "$http_code" == "200" ]]; then
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Backend tunnel probe failed for ${endpoint}" >&2
+          cat /tmp/backend-probe-response >&2 || true
+          exit 1
+
+      - name: Wait for webhook tunnel
+        shell: bash
+        env:
+          WEBHOOK_URL: ${{ inputs.webhook_url }}
+        run: |
+          set -euo pipefail
+          endpoint="${WEBHOOK_URL%/}/"
+          for _ in $(seq 1 60); do
+            http_code="$(curl -sS -o /tmp/webhook-probe-response -w "%{http_code}" "$endpoint" || true)"
+            if [[ "$http_code" == "200" ]]; then
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Webhook tunnel probe failed for ${endpoint}" >&2
+          cat /tmp/webhook-probe-response >&2 || true
+          exit 1

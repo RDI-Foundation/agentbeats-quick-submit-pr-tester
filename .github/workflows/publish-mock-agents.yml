@@ -1,0 +1,41 @@
+name: Publish Mock Agents
+
+on:
+  push:
+    branches: [agentbeats-e2e-quick-submit-20f680b046]
+    paths:
+      - 'agents/**'
+      - '.github/workflows/publish-mock-agents.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: mock-green
+            context: agents/mock-green
+          - name: mock-purple
+            context: agents/mock-purple
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ghcr.io/${{ github.repository }}-${{ matrix.name }}:latest
+          platforms: linux/amd64
