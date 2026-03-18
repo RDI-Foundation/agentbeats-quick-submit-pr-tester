@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "results": [
+    {
+      "winner": "competitor",
+      "detail": {
+        "green_token": "green-secret-quick-submit-9ee6e2767e",
+        "purple_reply": "mock-purple:purple-secret-quick-submit-9ee6e2767e:green-token:green-secret-quick-submit-9ee6e2767e",
+        "config": {
+          "runs": 1
+        }
+      }
+    }
+  ],
+  "participants": {
+    "green": "019d025e-25d5-7c22-bce0-0cf21189663f",
+    "competitor": "019d025e-2610-7bd3-b41e-b7f8766d10a9"
+  }
+}
