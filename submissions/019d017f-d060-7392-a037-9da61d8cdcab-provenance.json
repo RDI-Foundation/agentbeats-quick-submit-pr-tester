@@ -1,0 +1,22 @@
+{
+  "image_digests": {
+    "/competitor": "python@sha256:7026274c107626d7e940e0e5d6730481a4600ae95d5ca7eb532dd4180313fea9",
+    "/gateway": "ghcr.io/rdi-foundation/agentbeats-gateway@sha256:3f9976889c598092dc4273312ec431cbc48bbe064ff65b5613425f4990bc1d4c",
+    "/green": "python@sha256:7026274c107626d7e940e0e5d6730481a4600ae95d5ca7eb532dd4180313fea9"
+  },
+  "manifest_digests": {
+    "/": "sha256:N03ixo6tQA00n5w6qxkNTa3k+pqjlRLZVqbMyomBySg=",
+    "/competitor": "sha256:AOeDKMPnWVSeXqSNO/mD9hVFnd2U9MOD+p34j2XqwCg=",
+    "/gateway": "sha256:CoXy/8t84D5WN73GbS6SKudouTaCtwebINs8gjWo0NQ=",
+    "/green": "sha256:5hiTTrw5uayzMQ9tRCPh0kjwQ9klcxsxCpjmjXNycqc="
+  },
+  "timestamp": "2026-03-18T15:12:19Z",
+  "github_actions": {
+    "run_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/actions/runs/23251818296",
+    "ref": "refs/pull/132/merge",
+    "sha": "dd7fe98d2636e04ecefed23164b573a54bc90902",
+    "repository_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester",
+    "workflow_ref": "RDI-Foundation/agentbeats-quick-submit-pr-tester/.github/workflows/quick-submit.yml@refs/pull/132/merge",
+    "workflow_sha": "dd7fe98d2636e04ecefed23164b573a54bc90902"
+  }
+}
