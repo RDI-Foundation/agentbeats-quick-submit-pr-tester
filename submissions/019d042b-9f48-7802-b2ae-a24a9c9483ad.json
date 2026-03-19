@@ -1,0 +1,72 @@
+{
+  "manifest_version": "0.1.0",
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "competitor_api_key": {
+        "type": "string",
+        "secret": true
+      },
+      "green_green_token": {
+        "type": "string",
+        "secret": true
+      }
+    },
+    "required": [
+      "green_green_token",
+      "competitor_api_key"
+    ],
+    "additionalProperties": false
+  },
+  "components": {
+    "gateway": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/tags/v0.3/amber-manifest.json5",
+      "config": {
+        "assessment_config": {
+          "runs": 1
+        },
+        "participant_roles": {
+          "green": "green",
+          "purple1": "competitor"
+        },
+        "callback_urls": {}
+      }
+    },
+    "green": {
+      "manifest": "https://neon-limousines-privacy-bottom.trycloudflare.com/mock-green.json5",
+      "config": {
+        "green_token": "${config.green_green_token}"
+      }
+    },
+    "competitor": {
+      "manifest": "https://neon-limousines-privacy-bottom.trycloudflare.com/mock-purple.json5",
+      "config": {
+        "api_key": "${config.competitor_api_key}"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": "#gateway.green",
+      "from": "#green.a2a"
+    },
+    {
+      "to": "#gateway.purple1",
+      "from": "#competitor.a2a"
+    },
+    {
+      "to": "#green.proxy",
+      "from": "#gateway.proxy",
+      "weak": true
+    }
+  ],
+  "exports": {
+    "results": "#gateway.results"
+  },
+  "metadata": {
+    "agentbeats_ids": {
+      "green": "019d042b-9a68-7331-b2b2-a141a39e6628",
+      "competitor": "019d042b-9b13-7321-8d45-2b64bb6010b5"
+    }
+  }
+}
