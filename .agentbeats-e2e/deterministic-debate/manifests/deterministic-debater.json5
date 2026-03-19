@@ -1,0 +1,24 @@
+{
+  manifest_version: "0.1.0",
+  program: {
+    image: "ghcr.io/rdi-foundation/agentbeats-tutorial-debater:latest",
+    entrypoint: "sh -lc 'python -c \"import pathlib, urllib.request; pathlib.Path(\\\"/tmp/deterministic_debater.py\\\").write_text(urllib.request.urlopen(\\\"https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/agentbeats-e2e-quick-submit-5d60ed0541/.agentbeats-e2e/deterministic-debate/scripts/deterministic_debater.py\\\").read().decode())\" && exec uv run --no-sync python /tmp/deterministic_debater.py --host 0.0.0.0 --port 9010'",
+    network: {
+      endpoints: [
+        { name: "endpoint", port: 9010 },
+      ],
+    },
+  },
+  config_schema: {
+    type: "object",
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
+  provides: {
+    a2a: { kind: "a2a", endpoint: "endpoint" },
+  },
+  exports: {
+    a2a: "a2a",
+  },
+}
