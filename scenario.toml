@@ -1,0 +1,11 @@
+[green_agent]
+agentbeats_id = ""
+env = { GREEN_TOKEN = "${GREEN_TOKEN}" }
+
+[[participants]]
+agentbeats_id = ""
+name = "competitor"
+env = { API_KEY = "${API_KEY}" }
+
+[config]
+runs = 1
