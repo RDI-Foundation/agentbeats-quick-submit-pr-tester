@@ -1,0 +1,28 @@
+{
+  "status": "completed",
+  "results": [
+    {
+      "pro_debater": {
+        "emotional_appeal": 0.6,
+        "argument_clarity": 0.75,
+        "argument_arrangement": 0.75,
+        "relevance_to_topic": 0.8,
+        "total_score": 0.74
+      },
+      "con_debater": {
+        "emotional_appeal": 0.6,
+        "argument_clarity": 0.75,
+        "argument_arrangement": 0.75,
+        "relevance_to_topic": 0.8,
+        "total_score": 0.725
+      },
+      "winner": "pro_debater",
+      "reason": "Pro wins on 'AI should be regulated.' with stronger structure and topic coverage. Score margin: 0.015."
+    }
+  ],
+  "participants": {
+    "green": "019d06f8-ddbf-77d2-932d-96ece4b76af3",
+    "pro_debater": "019d06f8-de18-7413-ba7c-261985681c73",
+    "con_debater": "019d06f8-de32-7a63-b47e-63f6977861a5"
+  }
+}
