@@ -1,0 +1,15 @@
+name: Quick Submit
+
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches: [agentbeats-e2e-quick-submit-b4e3bc91fa]
+
+jobs:
+  run-scenario:
+    if: startsWith(github.head_ref, 'quick-submit-')
+    uses: RDI-Foundation/agentbeats-leaderboard-template/.github/workflows/quick-submit-runner.yml@v1-e2e
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
