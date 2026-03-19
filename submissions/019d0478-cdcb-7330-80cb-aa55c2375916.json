@@ -1,0 +1,72 @@
+{
+  "manifest_version": "0.1.0",
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "competitor_api_key": {
+        "type": "string",
+        "secret": true
+      },
+      "green_green_token": {
+        "type": "string",
+        "secret": true
+      }
+    },
+    "required": [
+      "green_green_token",
+      "competitor_api_key"
+    ],
+    "additionalProperties": false
+  },
+  "components": {
+    "gateway": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/tags/v0.3/amber-manifest.json5",
+      "config": {
+        "assessment_config": {
+          "runs": 1
+        },
+        "participant_roles": {
+          "green": "green",
+          "purple1": "competitor"
+        },
+        "callback_urls": {}
+      }
+    },
+    "green": {
+      "manifest": "https://clarity-burning-punk-beatles.trycloudflare.com/e2e/quick-submit-pr/manifests/mock-green.json5",
+      "config": {
+        "green_token": "${config.green_green_token}"
+      }
+    },
+    "competitor": {
+      "manifest": "https://clarity-burning-punk-beatles.trycloudflare.com/e2e/quick-submit-pr/manifests/mock-purple.json5",
+      "config": {
+        "api_key": "${config.competitor_api_key}"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": "#gateway.green",
+      "from": "#green.a2a"
+    },
+    {
+      "to": "#gateway.purple1",
+      "from": "#competitor.a2a"
+    },
+    {
+      "to": "#green.proxy",
+      "from": "#gateway.proxy",
+      "weak": true
+    }
+  ],
+  "exports": {
+    "results": "#gateway.results"
+  },
+  "metadata": {
+    "agentbeats_ids": {
+      "green": "019d0478-c9c9-7561-9d33-85b9729e4692",
+      "competitor": "019d0478-ca80-70f0-9704-bc9763b55bf9"
+    }
+  }
+}
