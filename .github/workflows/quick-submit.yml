@@ -1,0 +1,17 @@
+name: Quick Submit
+
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches: [agentbeats-e2e-quick-submit-b111750991]
+
+jobs:
+  run-scenario:
+    if: startsWith(github.head_ref, 'quick-submit-')
+    uses: RDI-Foundation/agentbeats-leaderboard-template/.github/workflows/quick-submit-runner.yml@v1
+    with:
+      backend_url: "https://korean-retirement-sheffield-taste.trycloudflare.com"
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
