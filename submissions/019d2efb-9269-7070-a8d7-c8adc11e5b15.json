@@ -1,0 +1,67 @@
+{
+  "manifest_version": "0.1.0",
+  "config_schema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+  },
+  "components": {
+    "gateway": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/tags/v0.3/amber-manifest.json5",
+      "config": {
+        "assessment_config": {
+          "topic": "AI should be regulated.",
+          "num_rounds": 2
+        },
+        "participant_roles": {
+          "green": "green",
+          "purple1": "pro_debater",
+          "purple2": "con_debater"
+        },
+        "callback_urls": {}
+      }
+    },
+    "green": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/agentbeats-e2e-quick-submit-27e4c80f21/.agentbeats-e2e/deterministic-debate/manifests/deterministic-debate-judge.json5",
+      "config": {}
+    },
+    "pro_debater": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/agentbeats-e2e-quick-submit-27e4c80f21/.agentbeats-e2e/deterministic-debate/manifests/deterministic-debater.json5",
+      "config": {}
+    },
+    "con_debater": {
+      "manifest": "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/agentbeats-e2e-quick-submit-27e4c80f21/.agentbeats-e2e/deterministic-debate/manifests/deterministic-debater.json5",
+      "config": {}
+    }
+  },
+  "bindings": [
+    {
+      "to": "#gateway.green",
+      "from": "#green.a2a"
+    },
+    {
+      "to": "#gateway.purple1",
+      "from": "#pro_debater.a2a"
+    },
+    {
+      "to": "#gateway.purple2",
+      "from": "#con_debater.a2a"
+    },
+    {
+      "to": "#green.proxy",
+      "from": "#gateway.proxy",
+      "weak": true
+    }
+  ],
+  "exports": {
+    "results": "#gateway.results"
+  },
+  "metadata": {
+    "agentbeats_ids": {
+      "green": "019d2efb-8fa1-7533-b56f-87f8e6f75ca7",
+      "pro_debater": "019d2efb-9051-7510-bb69-9f03a742182a",
+      "con_debater": "019d2efb-9068-72d0-925a-cf7e48b69a97"
+    }
+  }
+}
