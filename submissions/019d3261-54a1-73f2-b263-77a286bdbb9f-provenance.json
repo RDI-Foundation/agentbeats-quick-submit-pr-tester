@@ -1,0 +1,32 @@
+{
+  "image_digests": {
+    "amber-provisioner": "ghcr.io/rdi-foundation/amber-provisioner@sha256:22d0384e368b99ba740ce4f84e1824fad7272e5814400631ada6efa6ba6403da",
+    "c1-con-debater-net": "ghcr.io/rdi-foundation/amber-router@sha256:a6f7d9216d7663e8b16de6d8fa161d56e14b20cf751b9c3db8e762fdf3680530",
+    "c4-pro-debater-net": "ghcr.io/rdi-foundation/amber-router@sha256:a6f7d9216d7663e8b16de6d8fa161d56e14b20cf751b9c3db8e762fdf3680530",
+    "c4-pro-debater": "ghcr.io/rdi-foundation/agentbeats-tutorial-debater@sha256:c67b50748c5d942d67131c0d20932b74e0d70f0a8fbbc7604dc99cb50fa920d6",
+    "amber-otelcol": "otel/opentelemetry-collector-contrib@sha256:3bc07732530c87c53f9103b01a3afed972fdeba26087a590c1098781736e58c2",
+    "amber-router-control-init": "busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "amber-router": "ghcr.io/rdi-foundation/amber-router@sha256:a6f7d9216d7663e8b16de6d8fa161d56e14b20cf751b9c3db8e762fdf3680530",
+    "c1-con-debater": "ghcr.io/rdi-foundation/agentbeats-tutorial-debater@sha256:c67b50748c5d942d67131c0d20932b74e0d70f0a8fbbc7604dc99cb50fa920d6",
+    "c2-gateway-net": "ghcr.io/rdi-foundation/amber-router@sha256:a6f7d9216d7663e8b16de6d8fa161d56e14b20cf751b9c3db8e762fdf3680530",
+    "c3-green-net": "ghcr.io/rdi-foundation/amber-router@sha256:a6f7d9216d7663e8b16de6d8fa161d56e14b20cf751b9c3db8e762fdf3680530",
+    "c3-green": "ghcr.io/rdi-foundation/agentbeats-tutorial-debate-judge@sha256:c3b5f8efd0d55457c11dc27a329197121ebdbdc556b4c43fff1d369d805c5368",
+    "c2-gateway": "ghcr.io/rdi-foundation/agentbeats-gateway@sha256:3f9976889c598092dc4273312ec431cbc48bbe064ff65b5613425f4990bc1d4c"
+  },
+  "manifest_digests": {
+    "/": "sha256:XgJ9eRvzTJhVbinEkfY9+/hP88h+HMCxZy3JOhIdtIQ=",
+    "/con_debater": "sha256:pPWrkxLzY2bfLJOmn2spyLhVlG8DoD24RkF64Rynn+Q=",
+    "/gateway": "sha256:0nK+Cnn/T4UOQIP2JqNrAx8gHGVWjBsCUTBFgYgC44c=",
+    "/green": "sha256:o61dGkljRXNuXrz1vvcmumTIrf2Vw3N8Je+Yxuq0Wz0=",
+    "/pro_debater": "sha256:pPWrkxLzY2bfLJOmn2spyLhVlG8DoD24RkF64Rynn+Q="
+  },
+  "timestamp": "2026-03-28T03:00:57Z",
+  "github_actions": {
+    "run_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/actions/runs/23675984629",
+    "ref": "refs/pull/210/merge",
+    "sha": "28b303bb6d8e4586a9183eeadc56f9af24b82252",
+    "repository_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester",
+    "workflow_ref": "RDI-Foundation/agentbeats-quick-submit-pr-tester/.github/workflows/quick-submit.yml@refs/pull/210/merge",
+    "workflow_sha": "28b303bb6d8e4586a9183eeadc56f9af24b82252"
+  }
+}
