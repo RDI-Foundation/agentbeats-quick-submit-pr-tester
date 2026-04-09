@@ -1,0 +1,18 @@
+{
+  "manifest_digests": {
+    "/": "sha256:tQepz7hKGboudvCgeaHC2JMJtGQsUUSUB4nQ8iU9rYU=",
+    "/con_debater": "sha256:pPWrkxLzY2bfLJOmn2spyLhVlG8DoD24RkF64Rynn+Q=",
+    "/gateway": "sha256:0nK+Cnn/T4UOQIP2JqNrAx8gHGVWjBsCUTBFgYgC44c=",
+    "/green": "sha256:o61dGkljRXNuXrz1vvcmumTIrf2Vw3N8Je+Yxuq0Wz0=",
+    "/pro_debater": "sha256:pPWrkxLzY2bfLJOmn2spyLhVlG8DoD24RkF64Rynn+Q="
+  },
+  "timestamp": "2026-03-27T03:38:07Z",
+  "github_actions": {
+    "run_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/actions/runs/23629908108",
+    "ref": "refs/pull/198/merge",
+    "sha": "fc5ba9b6c5c78d64e9bd68d8be4ae77dc1c47019",
+    "repository_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester",
+    "workflow_ref": "RDI-Foundation/agentbeats-quick-submit-pr-tester/.github/workflows/quick-submit.yml@refs/pull/198/merge",
+    "workflow_sha": "fc5ba9b6c5c78d64e9bd68d8be4ae77dc1c47019"
+  }
+}
