@@ -1,0 +1,24 @@
+{
+  "image_digests": {
+    "/con_debater": "ghcr.io/rdi-foundation/agentbeats-tutorial-debater@sha256:c67b50748c5d942d67131c0d20932b74e0d70f0a8fbbc7604dc99cb50fa920d6",
+    "/gateway": "ghcr.io/rdi-foundation/agentbeats-gateway@sha256:3f9976889c598092dc4273312ec431cbc48bbe064ff65b5613425f4990bc1d4c",
+    "/green": "ghcr.io/rdi-foundation/agentbeats-tutorial-debate-judge@sha256:c3b5f8efd0d55457c11dc27a329197121ebdbdc556b4c43fff1d369d805c5368",
+    "/pro_debater": "ghcr.io/rdi-foundation/agentbeats-tutorial-debater@sha256:c67b50748c5d942d67131c0d20932b74e0d70f0a8fbbc7604dc99cb50fa920d6"
+  },
+  "manifest_digests": {
+    "/": "sha256:3eDQNkt5wHy1aSNc0gRbb4VCWhDYpg+w1zHiMhtOmxs=",
+    "/con_debater": "sha256:mclY55HucqJbidiJzBvBikzXhMFARvLflUEHeTjkMow=",
+    "/gateway": "sha256:55vdRwO+54k8WBZhh3nrN6Gn7cnk/+hm1dG+xt/GYSE=",
+    "/green": "sha256:wlaOQFHwSvHhw1jYmNdxJD0IJr3t8+pwf78cMJwmX9M=",
+    "/pro_debater": "sha256:mclY55HucqJbidiJzBvBikzXhMFARvLflUEHeTjkMow="
+  },
+  "timestamp": "2026-04-15T18:18:28Z",
+  "github_actions": {
+    "run_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester/actions/runs/24470745281",
+    "ref": "refs/pull/243/merge",
+    "sha": "855e1047405a05b7c3b0547c6dd61a7c7f5b813b",
+    "repository_url": "https://github.com/RDI-Foundation/agentbeats-quick-submit-pr-tester",
+    "workflow_ref": "RDI-Foundation/agentbeats-quick-submit-pr-tester/.github/workflows/quick-submit.yml@refs/pull/243/merge",
+    "workflow_sha": "855e1047405a05b7c3b0547c6dd61a7c7f5b813b"
+  }
+}
